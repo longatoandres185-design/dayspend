@@ -389,38 +389,43 @@
       </section>
 
       <!-- ========================================================
-           TAB 3: ACCOUNT & MULTI-DISPOSITIVO (SYNC & IPHONE GUIDE)
+           TAB 3: ACCOUNT & SINCRONIZZAZIONE CLOUD (SUPABASE)
            ======================================================== -->
       <section class="tab-pane" id="tabAccount">
         <div class="account-scrollable-content">
 
-          <!-- User Session Card -->
+          <!-- Cloud Account Card -->
           <div class="glass-card account-card" id="accountStatusCard">
-            <!-- Populated dynamically: either Guest Login Form OR Logged-in Profile -->
+
+            <!-- Logged Out View (Sign In / Sign Up) -->
             <div id="authLoggedOutView">
               <div class="auth-header">
-                <div class="auth-icon-box">📲</div>
+                <div class="auth-icon-box">☁️</div>
                 <div>
-                  <h3 class="auth-title">Accedi o Registrati</h3>
-                  <p class="auth-desc">Sincronizza le tue spese tra iPhone, iPad e Mac in tempo reale</p>
+                  <h3 class="auth-title">Account Cloud ✨</h3>
+                  <p class="auth-desc">Accedi per avere le stesse spese su iPhone, Mac e iPad</p>
                 </div>
               </div>
 
               <form id="authForm" onsubmit="return false;" class="auth-form">
                 <div class="form-group">
-                  <label for="authEmail" class="field-label">Email o Nome Utente</label>
-                  <input type="text" id="authEmail" class="ios-text-input" placeholder="es. laura@email.it" required>
+                  <label for="authEmail" class="field-label">Email</label>
+                  <input type="email" id="authEmail" class="ios-text-input" placeholder="es. laura@email.it" required autocomplete="email">
                 </div>
                 <div class="form-group">
                   <label for="authPassword" class="field-label">Password</label>
-                  <input type="password" id="authPassword" class="ios-text-input" placeholder="••••••••" required>
+                  <input type="password" id="authPassword" class="ios-text-input" placeholder="Minimo 6 caratteri" required autocomplete="current-password">
                 </div>
 
                 <div class="auth-buttons-row">
                   <button type="button" class="btn-ios-primary" id="loginBtn">Accedi ✨</button>
-                  <button type="button" class="btn-ios-secondary" id="registerBtn">Registrati 🌸</button>
+                  <button type="button" class="btn-ios-secondary" id="registerBtn">Crea Account 🌸</button>
                 </div>
               </form>
+
+              <div class="cloud-powered-badge" style="margin-top: 1rem; font-size: 0.72rem; color: var(--text-muted); text-align: center;">
+                ☁️ Database Cloud 24/7 • 100% Autonomo dal tuo Mac
+              </div>
             </div>
 
             <!-- Logged In View -->
@@ -428,14 +433,18 @@
               <div class="profile-header">
                 <div class="profile-avatar">👑</div>
                 <div class="profile-info">
-                  <h3 class="profile-name" id="userDisplayName">La mia Spesa</h3>
-                  <span class="profile-email" id="userDisplayEmail">utente@cloud.it</span>
+                  <h3 class="profile-name" id="userDisplayName">Il mio Account</h3>
+                  <span class="profile-email" id="userDisplayEmail">utente@email.it</span>
                   <div class="cloud-sync-badge">
                     <span class="sync-dot-green"></span>
-                    <span>Sincronizzato sul Cloud</span>
+                    <span id="cloudSyncStatusText">Sincronizzato sul Cloud</span>
                   </div>
                 </div>
               </div>
+
+              <p class="profile-explanation" style="margin-bottom: 1rem;">
+                Tutte le tue spese vengono sincronizzate in tempo reale nel Cloud. Puoi accedere con questa email da qualsiasi iPhone, iPad o computer per ritrovarle subito! 🌸
+              </p>
 
               <div class="profile-actions-row">
                 <button type="button" class="btn-ios-secondary" id="manualSyncBtn">
@@ -445,6 +454,26 @@
                   Esci
                 </button>
               </div>
+            </div>
+
+          </div>
+
+          <!-- Backup & Ripristino Locale -->
+          <div class="glass-card account-card">
+            <h4 style="font-family: var(--font-serif); font-size: 1.05rem; margin-bottom: 0.4rem; color: var(--text-dark);">
+              💾 Backup & Ripristino Manuale
+            </h4>
+            <p style="font-size: 0.76rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.85rem;">
+              Puoi anche esportare o importare in qualsiasi momento una copia di sicurezza delle tue spese in formato JSON.
+            </p>
+            <div class="profile-actions-row" style="flex-wrap: wrap;">
+              <button type="button" class="btn-ios-secondary" id="exportBackupBtn">
+                📥 Esporta Backup (JSON)
+              </button>
+              <button type="button" class="btn-ios-secondary" id="importBackupBtn">
+                📤 Ripristina Backup
+              </button>
+              <input type="file" id="backupFileInput" accept=".json" style="display: none;">
             </div>
           </div>
 
@@ -579,6 +608,8 @@
   <!-- Toast Notification -->
   <div class="ios-toast" id="toast"></div>
 
+  <!-- Supabase Cloud SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>

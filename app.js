@@ -251,7 +251,7 @@ const categoryFilter = document.getElementById("categoryFilter");
 const expensesContainer = document.getElementById("expensesContainer");
 const emptyState = document.getElementById("emptyState");
 
-// Account & Auth Elements
+// Account & Cloud Auth Elements (Supabase)
 const authLoggedOutView = document.getElementById("authLoggedOutView");
 const authLoggedInView = document.getElementById("authLoggedInView");
 const authEmail = document.getElementById("authEmail");
@@ -260,8 +260,14 @@ const loginBtn = document.getElementById("loginBtn");
 const registerBtn = document.getElementById("registerBtn");
 const userDisplayName = document.getElementById("userDisplayName");
 const userDisplayEmail = document.getElementById("userDisplayEmail");
+const cloudSyncStatusText = document.getElementById("cloudSyncStatusText");
 const manualSyncBtn = document.getElementById("manualSyncBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+
+// Backup & iPhone Elements
+const exportBackupBtn = document.getElementById("exportBackupBtn");
+const importBackupBtn = document.getElementById("importBackupBtn");
+const backupFileInput = document.getElementById("backupFileInput");
 const iphoneUrlText = document.getElementById("iphoneUrlText");
 const copyUrlBtn = document.getElementById("copyUrlBtn");
 const qrContainer = document.getElementById("qrContainer");
@@ -293,14 +299,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   calculateInstant();
   
-  // Check auth & network info
-  await checkServerInfo();
-  await checkAuthSession();
+  // Setup autonomous iPhone / web app link and QR
+  updateIphoneUrlDisplay();
 
   // Initial render & live check
   renderExpenses();
   updateImpactBanner();
   checkCompletedExpensesAndNotify();
+
+  // Connect to Supabase Cloud Auth & Sync
+  await initSupabaseAuth();
 
   // Setup periodic live update every 60 seconds and on tab visibility change
   setInterval(() => {
@@ -309,12 +317,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     checkCompletedExpensesAndNotify();
   }, 60000);
 
-  document.addEventListener("visibilitychange", () => {
+  document.addEventListener("visibilitychange", async () => {
     if (document.visibilityState === "visible") {
       renderExpenses();
       updateImpactBanner();
       checkCompletedExpensesAndNotify();
-      if (state.token) syncWithServer();
+      if (state.user) {
+        await fetchCloudExpenses();
+      }
     }
   });
 });
@@ -541,9 +551,9 @@ async function handleConfirmSaveExpense() {
   switchTab("tabDiary");
   showToast(`«${title}» salvata nel tuo diario! 💖`);
 
-  // Sync with cloud if logged in
-  if (state.token) {
-    await syncWithServer();
+  // Sync to Cloud if logged in
+  if (state.user) {
+    syncExpenseToCloud(newExpense);
   }
 }
 
@@ -569,13 +579,9 @@ async function confirmDeleteExpense() {
   state.itemToDeleteId = null;
   showToast("Spesa rimossa dal diario 🗑️");
 
-  if (state.token) {
-    try {
-      await fetch(`/api/expenses/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${state.token}` }
-      });
-    } catch (e) {}
+  // Sync delete to Cloud if logged in
+  if (state.user) {
+    deleteExpenseFromCloud(id);
   }
 }
 
@@ -591,8 +597,9 @@ async function toggleCompleteExpense(id) {
 
   showToast(item.isCompleted ? "Spesa contrassegnata come conclusa ✨" : "Spesa riattivata 🌸");
 
-  if (state.token) {
-    await syncWithServer();
+  // Sync update to Cloud if logged in
+  if (state.user) {
+    syncExpenseToCloud(item);
   }
 }
 
@@ -895,51 +902,124 @@ function handleExportCsv() {
 }
 
 // -------------------------------------------------------------
-// Cloud Sync & Multi-Device Auth
+// Supabase Cloud Backend Configuration
 // -------------------------------------------------------------
-async function checkServerInfo() {
-  try {
-    const res = await fetch("/api/info");
-    if (res.ok) {
-      const data = await res.json();
-      state.iphoneUrl = data.iphone_url;
-      iphoneUrlText.textContent = data.iphone_url;
-      renderQrCode(data.iphone_url);
+const SUPABASE_URL = "https://gpmetmkmogmjifecgxom.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbWV0bWttb2dtamlmZWNneG9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwODY4OTQsImV4cCI6MjEwNzY2Mjg5NH0.321uLYZ5EsTQR9cYyUgH6mZ9a7XoGPqt4v7PfpbLo6M";
+
+let supabaseClient = null;
+
+function getSupabase() {
+  if (!supabaseClient && window.supabase && typeof window.supabase.createClient === "function") {
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true
+        }
+      });
+    } catch (e) {
+      console.warn("Supabase init error:", e);
     }
-  } catch (e) {
-    iphoneUrlText.textContent = window.location.origin;
-    renderQrCode(window.location.origin);
   }
+  return supabaseClient;
 }
 
-async function checkAuthSession() {
-  const token = localStorage.getItem("dayspend_auth_token");
-  if (!token) {
-    showLoggedOutState();
+async function initSupabaseAuth() {
+  const sb = getSupabase();
+  if (!sb) {
+    showLoggedOutView();
     return;
   }
 
   try {
-    const res = await fetch("/api/auth/me", {
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      state.token = token;
-      state.user = data.user;
-      showLoggedInState(data.user);
-      await syncWithServer();
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && session.user) {
+      state.user = session.user;
+      showLoggedInView(session.user);
+      await fetchCloudExpenses();
+      subscribeToRealtimeExpenses();
     } else {
-      localStorage.removeItem("dayspend_auth_token");
-      showLoggedOutState();
+      showLoggedOutView();
     }
   } catch (e) {
-    // Offline mode: keep logged state if token exists
-    showLoggedOutState();
+    showLoggedOutView();
+  }
+
+  // Listen for login/logout across tabs/devices
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session && session.user) {
+      state.user = session.user;
+      showLoggedInView(session.user);
+      if (event === "SIGNED_IN") {
+        await fetchCloudExpenses();
+        subscribeToRealtimeExpenses();
+      }
+    } else {
+      state.user = null;
+      showLoggedOutView();
+    }
+  });
+}
+
+function showLoggedInView(user) {
+  if (authLoggedOutView) authLoggedOutView.style.display = "none";
+  if (authLoggedInView) authLoggedInView.style.display = "block";
+  if (userDisplayName) userDisplayName.textContent = user.email.split("@")[0];
+  if (userDisplayEmail) userDisplayEmail.textContent = user.email;
+  if (cloudSyncStatusText) cloudSyncStatusText.textContent = "Sincronizzato sul Cloud";
+}
+
+function showLoggedOutView() {
+  if (authLoggedOutView) authLoggedOutView.style.display = "block";
+  if (authLoggedInView) authLoggedInView.style.display = "none";
+  if (cloudSyncStatusText) cloudSyncStatusText.textContent = "Disconnesso";
+}
+
+async function handleRegister() {
+  const sb = getSupabase();
+  if (!sb) {
+    showToast("Connessione Supabase non disponibile");
+    return;
+  }
+
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+
+  if (!email || password.length < 6) {
+    showToast("Email e password (minimo 6 caratteri) sono obbligatorie!");
+    return;
+  }
+
+  showToast("Creazione account cloud in corso... 🌸");
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if (error) {
+      showToast(error.message || "Errore durante la registrazione");
+      return;
+    }
+
+    if (data.session) {
+      state.user = data.user;
+      showLoggedInView(data.user);
+      showToast("Account creato e connesso con successo! ✨");
+      await syncAllLocalExpensesToCloud();
+      subscribeToRealtimeExpenses();
+    } else if (data.user) {
+      showToast("Account registrato! Controlla la tua email per confermare l'accesso.");
+    }
+  } catch (e) {
+    showToast("Errore di connessione a Supabase");
   }
 }
 
 async function handleLogin() {
+  const sb = getSupabase();
+  if (!sb) {
+    showToast("Connessione Supabase non disponibile");
+    return;
+  }
+
   const email = authEmail.value.trim();
   const password = authPassword.value;
 
@@ -948,124 +1028,223 @@ async function handleLogin() {
     return;
   }
 
+  showToast("Accesso in corso... ✨");
   try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      showToast(data.error || "Errore durante il login");
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      showToast(error.message || "Email o password non corretti!");
       return;
     }
 
-    state.token = data.token;
     state.user = data.user;
-    localStorage.setItem("dayspend_auth_token", data.token);
-
-    showLoggedInState(data.user);
-    showToast(data.message || "Login completato! 🌸");
-    await syncWithServer();
+    showLoggedInView(data.user);
+    showToast(`Bentornata/o! Spese sincronizzate dal Cloud 🌸`);
+    await fetchCloudExpenses();
+    subscribeToRealtimeExpenses();
   } catch (e) {
-    showToast("Server non raggiungibile. Verifica la connessione.");
+    showToast("Errore di connessione a Supabase");
   }
 }
 
-async function handleRegister() {
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-
-  if (!email || password.length < 4) {
-    showToast("Email e password (minimo 4 caratteri) sono obbligatorie!");
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      showToast(data.error || "Errore durante la registrazione");
-      return;
+async function handleLogout() {
+  if (confirm("Vuoi uscire dall'account? Le tue spese rimarranno salvate al sicuro nel Cloud.")) {
+    const sb = getSupabase();
+    if (sb) {
+      await sb.auth.signOut();
     }
-
-    state.token = data.token;
-    state.user = data.user;
-    localStorage.setItem("dayspend_auth_token", data.token);
-
-    showLoggedInState(data.user);
-    showToast("Account creato con successo! ✨");
-    await syncWithServer();
-  } catch (e) {
-    showToast("Server non raggiungibile. Verifica la connessione.");
-  }
-}
-
-function handleLogout() {
-  if (confirm("Vuoi uscire dall'account? Le spese salvate resteranno anche sul tuo cloud.")) {
-    if (state.token) {
-      fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${state.token}` }
-      }).catch(() => {});
-    }
-    state.token = null;
     state.user = null;
-    localStorage.removeItem("dayspend_auth_token");
-    showLoggedOutState();
+    showLoggedOutView();
     showToast("Disconnesso dall'account.");
   }
 }
 
-async function syncWithServer() {
-  if (!state.token) return;
+async function fetchCloudExpenses() {
+  const sb = getSupabase();
+  if (!sb || !state.user) return;
 
   try {
-    syncStatusText.textContent = "Sincronizzo...";
-    const res = await fetch("/api/sync", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${state.token}`
-      },
-      body: JSON.stringify({ expenses: state.expenses })
-    });
+    if (cloudSyncStatusText) cloudSyncStatusText.textContent = "Sincronizzo...";
+    const { data, error } = await sb
+      .from("expenses")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.expenses && Array.isArray(data.expenses)) {
-        state.expenses = data.expenses;
+    if (!error && Array.isArray(data)) {
+      if (data.length > 0) {
+        state.expenses = data.map(r => ({
+          id: r.id,
+          title: r.title,
+          amount: parseFloat(r.amount),
+          days: parseInt(r.days, 10),
+          periodName: r.period_name || "",
+          dailyCost: parseFloat(r.daily_cost),
+          category: r.category || "shopping",
+          categoryIcon: r.category_icon || "👗",
+          note: r.note || "",
+          startDate: r.start_date || "",
+          endDate: r.end_date || "",
+          isCompleted: Boolean(r.is_completed),
+          createdAt: Number(r.created_at),
+          updatedAt: Number(r.updated_at)
+        }));
         saveLocalExpenses();
         renderExpenses();
         updateImpactBanner();
+      } else if (state.expenses.length > 0) {
+        await syncAllLocalExpensesToCloud();
       }
-      syncStatusText.textContent = "Sincronizzato";
-    } else {
-      syncStatusText.textContent = "Cloud attivo";
+      if (cloudSyncStatusText) cloudSyncStatusText.textContent = "Sincronizzato sul Cloud";
+    } else if (error) {
+      console.warn("fetchCloudExpenses error:", error);
+      if (cloudSyncStatusText) cloudSyncStatusText.textContent = "Sincronizzato locale";
     }
   } catch (e) {
-    syncStatusText.textContent = "Offline";
+    if (cloudSyncStatusText) cloudSyncStatusText.textContent = "Offline";
   }
 }
 
-function showLoggedInState(user) {
-  authLoggedOutView.style.display = "none";
-  authLoggedInView.style.display = "block";
-  userDisplayName.textContent = user.name || user.email.split("@")[0];
-  userDisplayEmail.textContent = user.email;
-  syncStatusText.textContent = "Sincronizzato";
+async function syncExpenseToCloud(item) {
+  const sb = getSupabase();
+  if (!sb || !state.user) return;
+
+  try {
+    await sb.from("expenses").upsert({
+      id: item.id,
+      user_id: state.user.id,
+      title: item.title,
+      amount: item.amount,
+      days: item.days,
+      period_name: item.periodName,
+      daily_cost: item.dailyCost,
+      category: item.category,
+      category_icon: item.categoryIcon,
+      note: item.note,
+      start_date: item.startDate,
+      end_date: item.endDate,
+      is_completed: item.isCompleted,
+      created_at: item.createdAt || Date.now(),
+      updated_at: item.updatedAt || Date.now()
+    });
+  } catch (e) {
+    console.warn("syncExpenseToCloud error:", e);
+  }
 }
 
-function showLoggedOutState() {
-  authLoggedOutView.style.display = "block";
-  authLoggedInView.style.display = "none";
-  syncStatusText.textContent = "Ospite";
+async function deleteExpenseFromCloud(id) {
+  const sb = getSupabase();
+  if (!sb || !state.user) return;
+
+  try {
+    await sb.from("expenses").delete().eq("id", id);
+  } catch (e) {
+    console.warn("deleteExpenseFromCloud error:", e);
+  }
+}
+
+async function syncAllLocalExpensesToCloud() {
+  const sb = getSupabase();
+  if (!sb || !state.user || state.expenses.length === 0) return;
+
+  try {
+    const payload = state.expenses.map(item => ({
+      id: item.id,
+      user_id: state.user.id,
+      title: item.title,
+      amount: item.amount,
+      days: item.days,
+      period_name: item.periodName,
+      daily_cost: item.dailyCost,
+      category: item.category,
+      category_icon: item.categoryIcon,
+      note: item.note,
+      start_date: item.startDate,
+      end_date: item.endDate,
+      is_completed: item.isCompleted,
+      created_at: item.createdAt || Date.now(),
+      updated_at: item.updatedAt || Date.now()
+    }));
+    await sb.from("expenses").upsert(payload);
+  } catch (e) {
+    console.warn("syncAllLocalExpensesToCloud error:", e);
+  }
+}
+
+let realtimeSubscription = null;
+function subscribeToRealtimeExpenses() {
+  const sb = getSupabase();
+  if (!sb || !state.user || realtimeSubscription) return;
+
+  try {
+    realtimeSubscription = sb
+      .channel("public:expenses")
+      .on("postgres_changes", { event: "*", schema: "public", table: "expenses" }, () => {
+        fetchCloudExpenses();
+      })
+      .subscribe();
+  } catch (e) {
+    console.warn("Realtime sub error:", e);
+  }
+}
+
+// -------------------------------------------------------------
+// Autonomous App URL & QR Code Setup
+// -------------------------------------------------------------
+function updateIphoneUrlDisplay() {
+  const isLocalFile = window.location.protocol === "file:";
+  const targetUrl = isLocalFile 
+    ? "https://longatoandres185-design.github.io/dayspend/" 
+    : window.location.href.split("#")[0].split("?")[0];
+  
+  state.iphoneUrl = targetUrl;
+  if (iphoneUrlText) iphoneUrlText.textContent = targetUrl;
+  renderQrCode(targetUrl);
+}
+
+// -------------------------------------------------------------
+// Autonomous Backup & Restore (JSON)
+// -------------------------------------------------------------
+function handleExportBackup() {
+  const data = {
+    app: "DaySpend ✨",
+    version: "2.0",
+    exportedAt: new Date().toISOString(),
+    expenses: state.expenses
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `dayspend_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Backup scaricato con successo! 📥");
+}
+
+function handleImportBackup(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const parsed = JSON.parse(event.target.result);
+      const items = Array.isArray(parsed) ? parsed : (parsed.expenses || []);
+      if (Array.isArray(items) && items.length > 0) {
+        state.expenses = items;
+        saveLocalExpenses();
+        renderExpenses();
+        updateImpactBanner();
+        showToast(`${items.length} spese ripristinate con successo! ✨`);
+      } else {
+        showToast("Il file non contiene spese valide.");
+      }
+    } catch (err) {
+      showToast("Errore nella lettura del file di backup.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
 }
 
 // -------------------------------------------------------------
@@ -1234,13 +1413,23 @@ function setupEventListeners() {
     celebrationModal.style.display = "none";
   });
 
-  // Auth actions
-  loginBtn.addEventListener("click", handleLogin);
-  registerBtn.addEventListener("click", handleRegister);
-  logoutBtn.addEventListener("click", handleLogout);
-  manualSyncBtn.addEventListener("click", async () => {
-    await syncWithServer();
-    showToast("Sincronizzazione completata! 🔄");
+  // Autonomous Backup & Restore actions
+  if (exportBackupBtn) {
+    exportBackupBtn.addEventListener("click", handleExportBackup);
+  }
+  if (importBackupBtn && backupFileInput) {
+    importBackupBtn.addEventListener("click", () => backupFileInput.click());
+    backupFileInput.addEventListener("change", handleImportBackup);
+  }
+
+  // Supabase Cloud Auth actions
+  if (loginBtn) loginBtn.addEventListener("click", handleLogin);
+  if (registerBtn) registerBtn.addEventListener("click", handleRegister);
+  if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+  if (manualSyncBtn) manualSyncBtn.addEventListener("click", async () => {
+    showToast("Sincronizzazione in corso... 🔄");
+    await fetchCloudExpenses();
+    showToast("Sincronizzato con il Cloud! ✨");
   });
 
   // Copy iPhone URL button
@@ -1262,7 +1451,6 @@ function setupEventListeners() {
       renderExpenses();
       updateImpactBanner();
       showToast("Spese di esempio ripristinate 🌸");
-      if (state.token) syncWithServer();
     }
   });
 
@@ -1273,7 +1461,6 @@ function setupEventListeners() {
       renderExpenses();
       updateImpactBanner();
       showToast("Tutte le spese sono state cancellate.");
-      if (state.token) syncWithServer();
     }
   });
 }
