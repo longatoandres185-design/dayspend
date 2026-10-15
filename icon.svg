@@ -35,7 +35,7 @@
       <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#9C103A" flood-opacity="0.20" />
     </filter>
 
-    <!-- Single Large Petal Definition -->
+    <!-- Petal Definitions -->
     <path id="mainPetal" d="M 256,256 C 200,165 200,68 256,48 C 312,68 312,165 256,256 Z" />
     <path id="innerPetal" d="M 256,256 C 218,175 218,98 256,80 C 294,98 294,175 256,256 Z" />
   </defs>
@@ -74,15 +74,12 @@
   <circle cx="256" cy="256" r="108" fill="url(#medallionGrad)" stroke="#FFAEC3" stroke-width="7" filter="url(#medallionShadow)" />
   <circle cx="256" cy="256" r="94" fill="none" stroke="#F67393" stroke-width="2.5" stroke-dasharray="6 7" opacity="0.8" />
 
-  <!-- Bold & Crisp Euro Glyph in Center -->
-  <text 
-    x="256" 
-    y="302" 
-    font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Playfair Display', Georgia, serif" 
-    font-size="132" 
-    font-weight="800" 
-    fill="#CF194F" 
-    text-anchor="middle">€</text>
+  <!-- Pure Vector Euro Symbol (Fine & Perfectly Centered) -->
+  <g stroke="#CF194F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M 307.9,217.1 A 55 55 0 1 0 307.9,294.9" />
+    <path d="M 204,244 L 288,244" />
+    <path d="M 204,268 L 288,268" />
+  </g>
 
   <!-- Corner Sparkles -->
   <g fill="#EB4874">
