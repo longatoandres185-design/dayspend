@@ -1066,14 +1066,16 @@ html, body {
 }
 
 .card-cat-icon {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   background: var(--blush-100);
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.35rem;
+  font-size: 1.65rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(235, 72, 116, 0.10);
 }
 
 .card-titles h4 {
@@ -1253,6 +1255,41 @@ html, body {
   color: var(--text-muted);
 }
 
+.server-notice {
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-element);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin-bottom: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.server-notice.server-offline {
+  background: #FFF1F2;
+  border: 1px solid #FECDD3;
+  color: #BE123C;
+}
+
+.server-notice.server-offline code {
+  background: rgba(190, 18, 60, 0.1);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.server-notice.file-mode {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1D4ED8;
+}
+
+.server-notice.file-mode a {
+  color: #1D4ED8;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .auth-buttons-row {
   display: flex;
   gap: 0.65rem;
@@ -1303,6 +1340,17 @@ html, body {
   padding: 0.15rem 0.5rem;
   border-radius: var(--radius-pill);
   margin-top: 0.25rem;
+}
+
+.profile-explanation {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-body);
+  background: var(--blush-50);
+  border: 1px solid var(--blush-100);
+  border-radius: var(--radius-element);
+  padding: 0.75rem 0.9rem;
+  margin-top: 0.85rem;
 }
 
 .sync-dot-green {
