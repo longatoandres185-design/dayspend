@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF0F3" />
+      <stop offset="50%" stop-color="#FFE4EB" />
+      <stop offset="100%" stop-color="#FDE2E8" />
+    </linearGradient>
+
+    <!-- Outer Ring Gradient -->
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBA9BC" />
+      <stop offset="100%" stop-color="#EB4874" />
+    </linearGradient>
+
+    <!-- Coin / Petal Core Gradient -->
+    <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFF5F7" />
+    </linearGradient>
+
+    <!-- Shadow -->
+    <filter id="softShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#EB4874" flood-opacity="0.18" />
+    </filter>
+  </defs>
+
+  <!-- Background Rounded Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+
+  <!-- Outer Decorative Ring -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="url(#ringGrad)" stroke-width="6" stroke-dasharray="8 12" opacity="0.6" />
+
+  <!-- Inner Soft Card Circle with Drop Shadow -->
+  <circle cx="256" cy="256" r="140" fill="url(#coreGrad)" filter="url(#softShadow)" stroke="#FED0DA" stroke-width="3" />
+
+  <!-- Central Flower & Sparkle Motif -->
+  <!-- Center Petals -->
+  <g fill="#EB4874" opacity="0.9">
+    <!-- North petal -->
+    <path d="M 256 160 C 242 195 242 225 256 240 C 270 225 270 195 256 160 Z" fill="#F67393" />
+    <!-- South petal -->
+    <path d="M 256 352 C 242 317 242 287 256 272 C 270 287 270 317 256 352 Z" fill="#F67393" />
+    <!-- East petal -->
+    <path d="M 352 256 C 317 242 287 242 272 256 C 287 270 317 270 352 256 Z" fill="#F67393" />
+    <!-- West petal -->
+    <path d="M 160 256 C 195 242 225 242 240 256 C 225 270 195 270 160 256 Z" fill="#F67393" />
+
+    <!-- Diagonal Petals -->
+    <path d="M 324 188 C 300 215 285 230 268 244 C 282 227 297 212 324 188 Z" fill="#FBA9BC" />
+    <path d="M 188 324 C 212 297 227 282 244 268 C 230 285 215 300 188 324 Z" fill="#FBA9BC" />
+    <path d="M 324 324 C 297 300 282 285 268 268 C 285 282 300 297 324 324 Z" fill="#FBA9BC" />
+    <path d="M 188 188 C 215 212 230 227 244 244 C 227 230 212 215 188 188 Z" fill="#FBA9BC" />
+  </g>
+
+  <!-- Central Golden Sparkle & Euro Sign -->
+  <circle cx="256" cy="256" r="32" fill="#EB4874" />
+  <circle cx="256" cy="256" r="28" fill="#FFF5F7" />
+
+  <text x="256" y="267" font-family="'Playfair Display', Georgia, serif" font-size="32" font-weight="bold" fill="#D82758" text-anchor="middle">€</text>
+
+  <!-- Top Right Sparkle -->
+  <path d="M 370 140 Q 370 155 385 155 Q 370 155 370 170 Q 370 155 355 155 Q 370 155 370 140 Z" fill="#EB4874" />
+
+  <!-- Bottom Left Small Sparkle -->
+  <path d="M 140 370 Q 140 380 150 380 Q 140 380 140 390 Q 140 380 130 380 Q 140 380 140 370 Z" fill="#FBA9BC" />
+</svg>

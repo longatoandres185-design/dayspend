@@ -1,0 +1,17 @@
+{
+  "name": "DaySpend ✨ Quanto mi costa al giorno?",
+  "short_name": "DaySpend",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFF9FA",
+  "theme_color": "#FFF1F2",
+  "description": "Dividi qualsiasi spesa per anno, mese o giorni e scopri quanto costa davvero ogni giorno.",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

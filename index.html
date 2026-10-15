@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DaySpend ✨</title>
+  <meta name="description" content="Un'app elegante e femminile per dividere le tue spese per anno, mese o giorni e sapere quanto spendi al giorno su iPhone e Mac.">
+  <meta name="theme-color" content="#FFF1F4">
+  
+  <!-- Apple Web App / iPhone Native Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DaySpend">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ambient floating glow background -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- Main iPhone App Frame -->
+  <div class="app-viewport">
+    
+    <!-- Top App Bar -->
+    <header class="ios-navbar">
+      <div class="navbar-left">
+        <span class="app-logo">🌸 Day<span>Spend</span></span>
+      </div>
+      <div class="navbar-right">
+        <!-- Sync Status Pill -->
+        <div class="sync-badge" id="syncStatusBadge" title="Stato sincronizzazione">
+          <span class="status-dot online"></span>
+          <span class="status-text" id="syncStatusText">Ospite</span>
+        </div>
+        <!-- Notification Permission Bell -->
+        <button type="button" class="nav-icon-btn" id="bellBtn" title="Attiva Notifiche">
+          🔔
+        </button>
+      </div>
+    </header>
+
+    <!-- App Views Container (Tabs) -->
+    <div class="app-screens-container">
+
+      <!-- ========================================================
+           TAB 1: CALCOLA & SALVA (WITH 2 SCREENS FLOW)
+           ======================================================== -->
+      <section class="tab-pane active" id="tabCalculate">
+        
+        <!-- Screen 1A: Quick Calculator -->
+        <div class="sub-screen active" id="subScreenCalc">
+          <div class="sub-screen-content">
+            
+            <div class="welcome-tagline">
+              <span>✨ Ammortizza le tue spese nel tempo</span>
+            </div>
+
+            <!-- Amount Input Box -->
+            <div class="glass-card main-calc-card">
+              <label for="amountInput" class="field-label">Quanto hai speso?</label>
+              <div class="amount-input-box">
+                <span class="sym">€</span>
+                <input 
+                  type="number" 
+                  id="amountInput" 
+                  class="amount-field" 
+                  placeholder="120" 
+                  min="0.01" 
+                  step="any"
+                  inputmode="decimal"
+                >
+              </div>
+
+              <!-- Quick amount chips -->
+              <div class="quick-chips-row">
+                <button type="button" class="quick-chip" data-val="30">€ 30</button>
+                <button type="button" class="quick-chip" data-val="60">€ 60</button>
+                <button type="button" class="quick-chip" data-val="120">€ 120</button>
+                <button type="button" class="quick-chip" data-val="250">€ 250</button>
+                <button type="button" class="quick-chip" data-val="500">€ 500</button>
+              </div>
+
+              <!-- Period Picker Grid -->
+              <label class="field-label" style="margin-top: 1.4rem;">Per quanto tempo vuoi dividerla?</label>
+              <div class="periods-grid">
+                <button type="button" class="period-btn active" data-period="year" data-days="365">
+                  <span class="p-emoji">👑</span>
+                  <span class="p-name">1 Anno</span>
+                  <span class="p-sub">365 gg</span>
+                </button>
+                <button type="button" class="period-btn" data-period="half-year" data-days="180">
+                  <span class="p-emoji">🌷</span>
+                  <span class="p-name">6 Mesi</span>
+                  <span class="p-sub">180 gg</span>
+                </button>
+                <button type="button" class="period-btn" data-period="quarter" data-days="90">
+                  <span class="p-emoji">🌸</span>
+                  <span class="p-name">3 Mesi</span>
+                  <span class="p-sub">90 gg</span>
+                </button>
+                <button type="button" class="period-btn" data-period="month" data-days="30">
+                  <span class="p-emoji">✨</span>
+                  <span class="p-name">1 Mese</span>
+                  <span class="p-sub">30 gg</span>
+                </button>
+                <button type="button" class="period-btn" data-period="week" data-days="7">
+                  <span class="p-emoji">🌿</span>
+                  <span class="p-name">1 Settimana</span>
+                  <span class="p-sub">7 gg</span>
+                </button>
+                <button type="button" class="period-btn" data-period="custom" id="customDaysBtn">
+                  <span class="p-emoji">✏️</span>
+                  <span class="p-name">Qualche giorno</span>
+                  <span class="p-sub">A scelta</span>
+                </button>
+              </div>
+
+              <!-- Custom Days Panel (hidden by default) -->
+              <div class="custom-days-drawer" id="customDaysDrawer" style="display: none;">
+                <div class="custom-stepper-row">
+                  <button type="button" class="step-btn" id="decDaysBtn">-</button>
+                  <div class="stepper-center">
+                    <input type="number" id="customDaysField" value="15" min="1" max="3650" inputmode="numeric">
+                    <span class="stepper-unit">giorni</span>
+                  </div>
+                  <button type="button" class="step-btn" id="incDaysBtn">+</button>
+                </div>
+                <div class="custom-date-picker-wrap">
+                  <span class="picker-label">Oppure fino alla data:</span>
+                  <input type="date" id="customEndDateField" class="ios-date-picker">
+                </div>
+                <div class="custom-formatted-preview" id="customPeriodPreview">
+                  Durata: 15 giorni (fino al 30.10.2026)
+                </div>
+              </div>
+            </div>
+
+            <!-- Instant Result Showcase -->
+            <div class="glass-card result-card">
+              <span class="result-top-tag">Risultato Istantaneo</span>
+              <div class="daily-hero-number">
+                <span class="hero-euro">€</span>
+                <span class="hero-val" id="resultDaily">0,33</span>
+                <span class="hero-freq">/ giorno</span>
+              </div>
+
+              <div class="stats-row">
+                <div class="stat-col">
+                  <span class="s-title">A settimana</span>
+                  <span class="s-val" id="resultWeekly">€ 2,31</span>
+                </div>
+                <div class="s-sep"></div>
+                <div class="stat-col">
+                  <span class="s-title">Al mese</span>
+                  <span class="s-val" id="resultMonthly">€ 10,00</span>
+                </div>
+                <div class="s-sep"></div>
+                <div class="stat-col">
+                  <span class="s-title">All'ora</span>
+                  <span class="s-val" id="resultHourly">€ 0,01</span>
+                </div>
+              </div>
+
+              <div class="lifestyle-card" id="lifestyleCard">
+                <span class="quote-emoji" id="quoteEmoji">☕</span>
+                <span class="quote-body" id="quoteText">Meno di un caffè al giorno: una coccola leggera per te stessa!</span>
+              </div>
+
+              <!-- Action to Proceed to Screen 2 -->
+              <button type="button" class="btn-ios-primary" id="goToSaveScreenBtn">
+                <span>🌸 Salva questa Spesa nel Diario</span>
+                <span class="btn-arrow">→</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Screen 1B: Save Details Screen (Seconda Schermata!) -->
+        <div class="sub-screen" id="subScreenDetails">
+          <div class="sub-screen-content">
+            
+            <!-- Back Navigation Bar -->
+            <div class="screen-back-bar">
+              <button type="button" class="back-link-btn" id="backToCalcBtn">
+                ← Torna al Calcolo
+              </button>
+              <h2 class="screen-bar-title">Dettagli Spesa</h2>
+              <div style="width: 70px;"></div>
+            </div>
+
+            <!-- Summary Ribbon -->
+            <div class="summary-ribbon">
+              <div class="ribbon-item">
+                <span class="r-label">Totale</span>
+                <span class="r-val" id="summaryTotal">€ 120,00</span>
+              </div>
+              <div class="ribbon-sep">•</div>
+              <div class="ribbon-item">
+                <span class="r-label">Durata</span>
+                <span class="r-val" id="summaryDays">365 giorni</span>
+              </div>
+              <div class="ribbon-sep">•</div>
+              <div class="ribbon-item">
+                <span class="r-label">Al giorno</span>
+                <span class="r-val highlight" id="summaryDaily">€ 0,33/gg</span>
+              </div>
+            </div>
+
+            <!-- Expense Form Card -->
+            <div class="glass-card details-card">
+              
+              <!-- Expense Title -->
+              <div class="form-group">
+                <label for="detailTitleInput" class="field-label">Di cosa si tratta?</label>
+                <input 
+                  type="text" 
+                  id="detailTitleInput" 
+                  class="ios-text-input" 
+                  placeholder="Es. Borsa in pelle cipria, Corso di Yoga..."
+                  autocomplete="off"
+                >
+              </div>
+
+              <!-- Category Selection -->
+              <div class="form-group">
+                <label class="field-label">Scegli una categoria:</label>
+                <div class="categories-grid" id="categoryPicker">
+                  <button type="button" class="cat-pill active" data-cat="shopping" data-icon="👗">
+                    <span>👗</span> Shopping & Moda
+                  </button>
+                  <button type="button" class="cat-pill" data-cat="beauty" data-icon="💄">
+                    <span>💄</span> Beauty & Cura
+                  </button>
+                  <button type="button" class="cat-pill" data-cat="travel" data-icon="✈️">
+                    <span>✈️</span> Viaggi & Weekend
+                  </button>
+                  <button type="button" class="cat-pill" data-cat="wellness" data-icon="🧘‍♀️">
+                    <span>🧘‍♀️</span> Benessere & Sport
+                  </button>
+                  <button type="button" class="cat-pill" data-cat="home" data-icon="🛋️">
+                    <span>🛋️</span> Casa & Arredo
+                  </button>
+                  <button type="button" class="cat-pill" data-cat="lifestyle" data-icon="☕">
+                    <span>☕</span> Lifestyle & Food
+                  </button>
+                  <button type="button" class="cat-pill" data-cat="tech" data-icon="📱">
+                    <span>📱</span> Tech & Abbonamenti
+                  </button>
+                  <button type="button" class="cat-pill" data-cat="other" data-icon="✨">
+                    <span>✨</span> Altro
+                  </button>
+                </div>
+              </div>
+
+              <!-- Start Date with Dots Format -->
+              <div class="form-group">
+                <label for="detailStartDateInput" class="field-label">Data di inizio (GG.MM.AAAA):</label>
+                <div class="date-input-with-preview">
+                  <input type="date" id="detailStartDateInput" class="ios-date-picker">
+                  <div class="formatted-date-badge" id="formattedStartDateBadge">
+                    📅 Inizio: 15.10.2026
+                  </div>
+                </div>
+              </div>
+
+              <!-- Computed End Date Preview (with Dots) -->
+              <div class="computed-end-box">
+                <span class="end-box-label">Data di conclusione prevista:</span>
+                <span class="end-box-date" id="computedEndDateDots">15.10.2027</span>
+                <span class="end-box-sub" id="computedDaysSub">Tra 365 giorni esatti</span>
+              </div>
+
+              <!-- Optional Note -->
+              <div class="form-group" style="margin-top: 1.2rem;">
+                <label for="detailNoteInput" class="field-label">Un pensiero o una nota (facoltativo):</label>
+                <input 
+                  type="text" 
+                  id="detailNoteInput" 
+                  class="ios-text-input" 
+                  placeholder="Es. 'Acquistata per festeggiare un bel traguardo!' 💖"
+                >
+              </div>
+
+              <!-- Confirm Save Button -->
+              <button type="button" class="btn-ios-primary" id="confirmSaveExpenseBtn">
+                <span>✨ Conferma e Salva nel Diario</span>
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================================
+           TAB 2: DIARIO DELLE SPESE (LIST & IMPACT BANNER)
+           ======================================================== -->
+      <section class="tab-pane" id="tabDiary">
+        <div class="diary-scrollable-content">
+
+          <!-- Impact Summary Card -->
+          <div class="glass-card impact-card">
+            <div class="impact-top-label">
+              <span class="pulse-sparkle">✨</span>
+              <span>Il tuo impatto quotidiano attivo</span>
+            </div>
+            <div class="impact-daily-sum">
+              <span class="i-sym">€</span>
+              <span class="i-val" id="totalDailyImpact">0,00</span>
+              <span class="i-unit">/ giorno</span>
+            </div>
+            <p class="impact-subtext" id="impactSubtext">
+              Calcolo automatico in base ai giorni trascorsi e rimanenti.
+            </p>
+
+            <div class="impact-metrics-row">
+              <div class="metric-pill">
+                <span class="m-label">Spese attive</span>
+                <span class="m-val" id="activeCount">0</span>
+              </div>
+              <div class="metric-pill">
+                <span class="m-label">Totale investito</span>
+                <span class="m-val" id="activeTotalAmount">€ 0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diary Header & Actions -->
+          <div class="diary-toolbar">
+            <div class="toolbar-title-box">
+              <h3 class="diary-heading">Le Tue Spese 📖</h3>
+              <span class="diary-subheading">Aggiornato in tempo reale con i giorni rimanenti</span>
+            </div>
+            <div class="toolbar-btns">
+              <button type="button" class="toolbar-btn export-btn" id="exportCsvBtn" title="Esporta file Excel/CSV">
+                📊 Esporta Excel
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Tabs -->
+          <div class="ios-segmented-control">
+            <button type="button" class="seg-btn active" data-filter="all">Tutte (<span id="countAll">0</span>)</button>
+            <button type="button" class="seg-btn" data-filter="active">In Corso (<span id="countActive">0</span>)</button>
+            <button type="button" class="seg-btn" data-filter="completed">Concluse (<span id="countCompleted">0</span>)</button>
+          </div>
+
+          <!-- Search and Category Filter -->
+          <div class="diary-search-row">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Cerca una spesa...">
+            <select id="categoryFilter" class="category-select">
+              <option value="all">Tutte</option>
+              <option value="shopping">👗 Shopping</option>
+              <option value="beauty">💄 Beauty</option>
+              <option value="travel">✈️ Viaggi</option>
+              <option value="wellness">🧘‍♀️ Benessere</option>
+              <option value="home">🛋️ Casa</option>
+              <option value="lifestyle">☕ Lifestyle</option>
+              <option value="tech">📱 Tech</option>
+              <option value="other">✨ Altro</option>
+            </select>
+          </div>
+
+          <!-- Expenses List Container -->
+          <div class="expenses-container" id="expensesContainer">
+            <!-- Dynamically populated via JavaScript -->
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state-box" id="emptyState" style="display: none;">
+            <div class="empty-emoji">🌸</div>
+            <h4>Nessuna spesa trovata</h4>
+            <p>Aggiungi la tua prima spesa dal calcolatore per vederla comparire qui nel diario!</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================================
+           TAB 3: ACCOUNT & MULTI-DISPOSITIVO (SYNC & IPHONE GUIDE)
+           ======================================================== -->
+      <section class="tab-pane" id="tabAccount">
+        <div class="account-scrollable-content">
+
+          <!-- User Session Card -->
+          <div class="glass-card account-card" id="accountStatusCard">
+            <!-- Populated dynamically: either Guest Login Form OR Logged-in Profile -->
+            <div id="authLoggedOutView">
+              <div class="auth-header">
+                <div class="auth-icon-box">📲</div>
+                <div>
+                  <h3 class="auth-title">Accedi o Registrati</h3>
+                  <p class="auth-desc">Sincronizza le tue spese tra iPhone, iPad e Mac in tempo reale</p>
+                </div>
+              </div>
+
+              <form id="authForm" onsubmit="return false;" class="auth-form">
+                <div class="form-group">
+                  <label for="authEmail" class="field-label">Email o Nome Utente</label>
+                  <input type="text" id="authEmail" class="ios-text-input" placeholder="es. laura@email.it" required>
+                </div>
+                <div class="form-group">
+                  <label for="authPassword" class="field-label">Password</label>
+                  <input type="password" id="authPassword" class="ios-text-input" placeholder="••••••••" required>
+                </div>
+
+                <div class="auth-buttons-row">
+                  <button type="button" class="btn-ios-primary" id="loginBtn">Accedi ✨</button>
+                  <button type="button" class="btn-ios-secondary" id="registerBtn">Registrati 🌸</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Logged In View -->
+            <div id="authLoggedInView" style="display: none;">
+              <div class="profile-header">
+                <div class="profile-avatar">👑</div>
+                <div class="profile-info">
+                  <h3 class="profile-name" id="userDisplayName">La mia Spesa</h3>
+                  <span class="profile-email" id="userDisplayEmail">utente@cloud.it</span>
+                  <div class="cloud-sync-badge">
+                    <span class="sync-dot-green"></span>
+                    <span>Sincronizzato sul Cloud</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-actions-row">
+                <button type="button" class="btn-ios-secondary" id="manualSyncBtn">
+                  🔄 Sincronizza Ora
+                </button>
+                <button type="button" class="btn-ios-danger" id="logoutBtn">
+                  Esci
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- iPhone Connection & Installation Guide -->
+          <div class="glass-card iphone-guide-card">
+            <div class="guide-header">
+              <div class="guide-icon-badge">📱</div>
+              <div>
+                <h4 class="guide-title">Come usarla su iPhone</h4>
+                <p class="guide-desc">Apri l'app sul tuo iPhone e aggiungila alla Schermata Home</p>
+              </div>
+            </div>
+
+            <div class="iphone-link-box">
+              <span class="link-label">Indirizzo per il tuo iPhone:</span>
+              <div class="link-url-pill">
+                <code id="iphoneUrlText">http://192.168.1.22:3333</code>
+                <button type="button" class="copy-link-btn" id="copyUrlBtn">Copia</button>
+              </div>
+            </div>
+
+            <!-- Dynamic QR Code Container -->
+            <div class="qr-code-section">
+              <div class="qr-canvas-box" id="qrContainer">
+                <!-- SVG QR code rendered here -->
+              </div>
+              <p class="qr-instructions">Inquadra questo codice con la fotocamera del tuo iPhone per aprirla subito!</p>
+            </div>
+
+            <div class="step-guide">
+              <div class="step-item">
+                <span class="step-num">1</span>
+                <span>Apri il link in <strong>Safari</strong> sul tuo iPhone.</span>
+              </div>
+              <div class="step-item">
+                <span class="step-num">2</span>
+                <span>Tocca l'icona <strong>Condividi</strong> (quadrato con freccia verso l'alto ⎋).</span>
+              </div>
+              <div class="step-item">
+                <span class="step-num">3</span>
+                <span>Tocca <strong>"Aggiungi alla schermata Home"</strong>.</span>
+              </div>
+              <div class="step-item">
+                <span class="step-num">4</span>
+                <span>✨ L'app si aprirà a schermo intero come una vera app nativa!</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications Info Card -->
+          <div class="glass-card notif-info-card">
+            <div class="notif-header">
+              <span class="notif-bell-icon">🔔</span>
+              <div>
+                <h4 class="notif-title">Notifiche di Conclusione</h4>
+                <p class="notif-desc">Quando una spesa arriva alla conclusione, riceverai una frase a tema celebrativa</p>
+              </div>
+            </div>
+            <button type="button" class="btn-ios-secondary" id="requestNotifBtn">
+              🔔 Verifica / Attiva Notifiche
+            </button>
+          </div>
+
+          <!-- Reset / Clear options -->
+          <div class="account-footer-options">
+            <button type="button" class="link-text-btn" id="resetSampleDataBtn">Ripristina spese di esempio</button>
+            <span>•</span>
+            <button type="button" class="link-text-btn" id="clearAllDataBtn">Cancella tutto</button>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ========================================================
+         IOS BOTTOM TAB BAR
+         ======================================================== -->
+    <nav class="ios-tab-bar">
+      <button type="button" class="tab-item active" data-tab="tabCalculate">
+        <span class="tab-icon">🧮</span>
+        <span class="tab-label">Calcola</span>
+      </button>
+      <button type="button" class="tab-item" data-tab="tabDiary">
+        <span class="tab-icon">📖</span>
+        <span class="tab-label">Diario</span>
+        <span class="tab-badge" id="tabDiaryBadge" style="display: none;">0</span>
+      </button>
+      <button type="button" class="tab-item" data-tab="tabAccount">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Account</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ========================================================
+       CELEBRATION MODAL (ON EXPENSE AMORTIZATION COMPLETED!)
+       ======================================================== -->
+  <div class="modal-backdrop" id="celebrationModal" style="display: none;">
+    <div class="modal-sheet celebration-sheet">
+      <div class="celebration-confetti">🎉 🌷 ✨ 💖 👑</div>
+      <div class="celebration-badge">Traguardo Raggiunto!</div>
+      <h3 class="celebration-title" id="celebrationTitle">Congratulazioni! ✨</h3>
+      <p class="celebration-message" id="celebrationMessage">
+        La tua spesa è stata ammortizzata completamente!
+      </p>
+      <div class="celebration-details-pill" id="celebrationDetailsPill">
+        € 120,00 • 365 giorni completati
+      </div>
+      <button type="button" class="btn-ios-primary" id="closeCelebrationBtn">
+        Splendido! 🌸
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       CONFIRM DELETE MODAL
+       ======================================================== -->
+  <div class="modal-backdrop" id="deleteConfirmModal" style="display: none;">
+    <div class="modal-sheet">
+      <div class="modal-sheet-icon">🗑️</div>
+      <h3 class="modal-sheet-title">Rimuovere questa spesa?</h3>
+      <p class="modal-sheet-text" id="deleteModalText">Sei sicura di voler eliminare questa spesa dal diario?</p>
+      <div class="modal-sheet-btns">
+        <button type="button" class="btn-ios-secondary" id="cancelDeleteBtn">Annulla</button>
+        <button type="button" class="btn-ios-danger" id="confirmDeleteBtn">Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="ios-toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
