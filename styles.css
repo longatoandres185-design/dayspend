@@ -594,15 +594,38 @@ html, body {
 .lifestyle-card {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  background: rgba(255, 255, 255, 0.9);
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--blush-200);
-  padding: 0.55rem 1rem;
+  padding: 0.55rem 1.1rem;
   border-radius: var(--radius-pill);
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 500;
   color: var(--text-body);
-  margin-bottom: 1.1rem;
+  margin: 0 auto 1.1rem auto;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.35;
+  box-shadow: 0 2px 8px rgba(235, 72, 116, 0.05);
+}
+
+.quote-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  line-height: 1;
+  flex-shrink: 0;
+  vertical-align: middle;
+  transform: translateY(-0.5px);
+}
+
+.quote-body {
+  display: inline-block;
+  vertical-align: middle;
+  text-align: center;
+  line-height: 1.35;
 }
 
 /* iOS Primary Button */

@@ -74,11 +74,11 @@
   <circle cx="256" cy="256" r="108" fill="url(#medallionGrad)" stroke="#FFAEC3" stroke-width="7" filter="url(#medallionShadow)" />
   <circle cx="256" cy="256" r="94" fill="none" stroke="#F67393" stroke-width="2.5" stroke-dasharray="6 7" opacity="0.8" />
 
-  <!-- Pure Vector Euro Symbol (Fine & Perfectly Centered) -->
-  <g stroke="#CF194F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="M 307.9,217.1 A 55 55 0 1 0 307.9,294.9" />
-    <path d="M 204,244 L 288,244" />
-    <path d="M 204,268 L 288,268" />
+  <!-- Pure Vector Euro Symbol (Smaller, Fine & Equidistant to Circle Borders) -->
+  <g stroke="#CF194F" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M 293.6,226.82 A 42 42 0 1 0 293.6,285.18" />
+    <path d="M 218.39,245 L 285.14,245" />
+    <path d="M 218.39,267 L 285.14,267" />
   </g>
 
   <!-- Corner Sparkles -->

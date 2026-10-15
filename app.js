@@ -488,28 +488,28 @@ function updateLifestyleQuote(daily, totalAmount) {
   let icon = "☕";
 
   if (totalAmount <= 0) {
-    quote = "Inserisci un importo per calcolare la tua spesa quotidiana ✨";
-    icon = "🌸";
+    quote = "Inserisci un importo per calcolare la tua spesa quotidiana";
+    icon = "✨";
   } else if (daily < 0.50) {
-    quote = "Meno di una caramella o una bustina di tè! Una vera piuma sul tuo budget 🌸";
+    quote = "Meno di una caramella o una bustina di tè! Una vera piuma sul tuo budget";
     icon = "🍬";
   } else if (daily <= 1.50) {
-    quote = "Meno di un caffè al bar! Regalati questa gioia senza pensieri ☕";
+    quote = "Meno di un caffè al bar! Regalati questa gioia senza pensieri";
     icon = "☕";
   } else if (daily <= 3.50) {
-    quote = "Quanto un cappuccino con brioche 🥐. Perfettamente sostenibile nel quotidiano!";
+    quote = "Quanto un cappuccino con brioche. Perfettamente sostenibile nel quotidiano!";
     icon = "🥐";
   } else if (daily <= 6.00) {
-    quote = "Quanto un matcha latte o una spremuta fresca 🍵. Benissimo ammortizzato!";
+    quote = "Quanto un matcha latte o una spremuta fresca. Benissimo ammortizzato!";
     icon = "🍵";
   } else if (daily <= 12.00) {
-    quote = "Quanto un calice di vino o un aperitivo serale 🥂. Ti ripaga ogni singolo giorno!";
+    quote = "Quanto un calice di vino o un aperitivo serale. Ti ripaga ogni singolo giorno!";
     icon = "🥂";
   } else if (daily <= 25.00) {
-    quote = "Quanto una cena sfiziosa 🥗. Un acquisto che valorizza le tue giornate!";
-    icon = "✨";
+    quote = "Quanto una cena sfiziosa. Un acquisto che valorizza le tue giornate!";
+    icon = "🥗";
   } else {
-    quote = "Un investimento importante per te stessa 👑. Meriti di realizzare i tuoi desideri!";
+    quote = "Un investimento importante per te stessa. Meriti di realizzare i tuoi desideri!";
     icon = "👑";
   }
 
