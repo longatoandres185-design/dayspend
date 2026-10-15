@@ -447,34 +447,12 @@
               </p>
 
               <div class="profile-actions-row">
-                <button type="button" class="btn-ios-secondary" id="manualSyncBtn">
-                  🔄 Sincronizza Ora
-                </button>
-                <button type="button" class="btn-ios-danger" id="logoutBtn">
-                  Esci
+                <button type="button" class="btn-ios-danger" id="logoutBtn" style="width: 100%;">
+                  Esci dall'Account 🚪
                 </button>
               </div>
             </div>
 
-          </div>
-
-          <!-- Backup & Ripristino Locale -->
-          <div class="glass-card account-card">
-            <h4 style="font-family: var(--font-serif); font-size: 1.05rem; margin-bottom: 0.4rem; color: var(--text-dark);">
-              💾 Backup & Ripristino Manuale
-            </h4>
-            <p style="font-size: 0.76rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.85rem;">
-              Puoi anche esportare o importare in qualsiasi momento una copia di sicurezza delle tue spese in formato JSON.
-            </p>
-            <div class="profile-actions-row" style="flex-wrap: wrap;">
-              <button type="button" class="btn-ios-secondary" id="exportBackupBtn">
-                📥 Esporta Backup (JSON)
-              </button>
-              <button type="button" class="btn-ios-secondary" id="importBackupBtn">
-                📤 Ripristina Backup
-              </button>
-              <input type="file" id="backupFileInput" accept=".json" style="display: none;">
-            </div>
           </div>
 
           <!-- iPhone Connection & Installation Guide -->
@@ -610,6 +588,6 @@
 
   <!-- Supabase Cloud SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=2.4"></script>
 </body>
 </html>

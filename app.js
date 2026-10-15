@@ -261,13 +261,9 @@ const registerBtn = document.getElementById("registerBtn");
 const userDisplayName = document.getElementById("userDisplayName");
 const userDisplayEmail = document.getElementById("userDisplayEmail");
 const cloudSyncStatusText = document.getElementById("cloudSyncStatusText");
-const manualSyncBtn = document.getElementById("manualSyncBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 
-// Backup & iPhone Elements
-const exportBackupBtn = document.getElementById("exportBackupBtn");
-const importBackupBtn = document.getElementById("importBackupBtn");
-const backupFileInput = document.getElementById("backupFileInput");
+// iPhone & Installation Elements
 const iphoneUrlText = document.getElementById("iphoneUrlText");
 const copyUrlBtn = document.getElementById("copyUrlBtn");
 const qrContainer = document.getElementById("qrContainer");
@@ -310,23 +306,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Connect to Supabase Cloud Auth & Sync
   await initSupabaseAuth();
 
-  // Setup periodic live update every 60 seconds and on tab visibility change
+  // Setup periodic live calculations every 60 seconds
   setInterval(() => {
     renderExpenses();
     updateImpactBanner();
     checkCompletedExpensesAndNotify();
   }, 60000);
 
-  document.addEventListener("visibilitychange", async () => {
+  // Background auto-sync every 20 seconds when logged in
+  setInterval(async () => {
+    if (state.user && navigator.onLine) {
+      await fetchCloudExpenses(true);
+    }
+  }, 20000);
+
+  // Automatic sync whenever returning to the app or reconnecting online
+  const handleAppResume = async () => {
+    renderExpenses();
+    updateImpactBanner();
+    checkCompletedExpensesAndNotify();
+    if (state.user && navigator.onLine) {
+      await fetchCloudExpenses(true);
+    }
+  };
+
+  document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      renderExpenses();
-      updateImpactBanner();
-      checkCompletedExpensesAndNotify();
-      if (state.user) {
-        await fetchCloudExpenses();
-      }
+      handleAppResume();
     }
   });
+  window.addEventListener("focus", handleAppResume);
+  window.addEventListener("online", handleAppResume);
 });
 
 function initFormInputs() {
@@ -1050,6 +1060,10 @@ async function handleLogout() {
   if (confirm("Vuoi uscire dall'account? Le tue spese rimarranno salvate al sicuro nel Cloud.")) {
     const sb = getSupabase();
     if (sb) {
+      if (realtimeSubscription) {
+        try { sb.removeChannel(realtimeSubscription); } catch (e) {}
+        realtimeSubscription = null;
+      }
       await sb.auth.signOut();
     }
     state.user = null;
@@ -1058,12 +1072,12 @@ async function handleLogout() {
   }
 }
 
-async function fetchCloudExpenses() {
+async function fetchCloudExpenses(silent = false) {
   const sb = getSupabase();
   if (!sb || !state.user) return;
 
   try {
-    if (cloudSyncStatusText) cloudSyncStatusText.textContent = "Sincronizzo...";
+    if (cloudSyncStatusText && !silent) cloudSyncStatusText.textContent = "Sincronizzo...";
     const { data, error } = await sb
       .from("expenses")
       .select("*")
@@ -1172,15 +1186,23 @@ async function syncAllLocalExpensesToCloud() {
 let realtimeSubscription = null;
 function subscribeToRealtimeExpenses() {
   const sb = getSupabase();
-  if (!sb || !state.user || realtimeSubscription) return;
+  if (!sb || !state.user) return;
+  if (realtimeSubscription) {
+    try { sb.removeChannel(realtimeSubscription); } catch (e) {}
+    realtimeSubscription = null;
+  }
 
   try {
     realtimeSubscription = sb
       .channel("public:expenses")
       .on("postgres_changes", { event: "*", schema: "public", table: "expenses" }, () => {
-        fetchCloudExpenses();
+        fetchCloudExpenses(true);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED" && cloudSyncStatusText) {
+          cloudSyncStatusText.textContent = "Sincronizzato sul Cloud";
+        }
+      });
   } catch (e) {
     console.warn("Realtime sub error:", e);
   }
@@ -1200,52 +1222,6 @@ function updateIphoneUrlDisplay() {
   renderQrCode(targetUrl);
 }
 
-// -------------------------------------------------------------
-// Autonomous Backup & Restore (JSON)
-// -------------------------------------------------------------
-function handleExportBackup() {
-  const data = {
-    app: "DaySpend ✨",
-    version: "2.0",
-    exportedAt: new Date().toISOString(),
-    expenses: state.expenses
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `dayspend_backup_${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast("Backup scaricato con successo! 📥");
-}
-
-function handleImportBackup(e) {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    try {
-      const parsed = JSON.parse(event.target.result);
-      const items = Array.isArray(parsed) ? parsed : (parsed.expenses || []);
-      if (Array.isArray(items) && items.length > 0) {
-        state.expenses = items;
-        saveLocalExpenses();
-        renderExpenses();
-        updateImpactBanner();
-        showToast(`${items.length} spese ripristinate con successo! ✨`);
-      } else {
-        showToast("Il file non contiene spese valide.");
-      }
-    } catch (err) {
-      showToast("Errore nella lettura del file di backup.");
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = "";
-}
 
 // -------------------------------------------------------------
 // QR Code Generator (Pure SVG Embedded)
@@ -1413,24 +1389,10 @@ function setupEventListeners() {
     celebrationModal.style.display = "none";
   });
 
-  // Autonomous Backup & Restore actions
-  if (exportBackupBtn) {
-    exportBackupBtn.addEventListener("click", handleExportBackup);
-  }
-  if (importBackupBtn && backupFileInput) {
-    importBackupBtn.addEventListener("click", () => backupFileInput.click());
-    backupFileInput.addEventListener("change", handleImportBackup);
-  }
-
   // Supabase Cloud Auth actions
   if (loginBtn) loginBtn.addEventListener("click", handleLogin);
   if (registerBtn) registerBtn.addEventListener("click", handleRegister);
   if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
-  if (manualSyncBtn) manualSyncBtn.addEventListener("click", async () => {
-    showToast("Sincronizzazione in corso... 🔄");
-    await fetchCloudExpenses();
-    showToast("Sincronizzato con il Cloud! ✨");
-  });
 
   // Copy iPhone URL button
   copyUrlBtn.addEventListener("click", () => {
